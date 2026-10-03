@@ -523,11 +523,24 @@ function initGalaxy() {
     closeCard();
   });
 
-  renderer.domElement.addEventListener('click', (event) => {
+   let downX = 0, downY = 0, downTime = 0;
+
+  renderer.domElement.addEventListener('pointerdown', (e) => {
+    downX = e.clientX;
+    downY = e.clientY;
+    downTime = performance.now();
+  });
+
+  renderer.domElement.addEventListener('pointerup', (e) => {
     if (paused) return;
 
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    // Si arrastró o mantuvo presionado, es rotación de cámara, no un toque
+    const moved = Math.hypot(e.clientX - downX, e.clientY - downY);
+    if (moved > 10 || performance.now() - downTime > 500) return;
+
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(interactiveImages);
